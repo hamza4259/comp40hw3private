@@ -22,7 +22,7 @@ typedef struct cl_methods_arr{
 
 A2Methods_UArray2 rotate(char *time_file_name, int degrees,
                          A2Methods_T methods, A2Methods_mapfun *map,
-                         Pnm_ppm *pixmap);
+                         Pnm_ppm *pixmap, bool* zero_degrees);
                          
 A2Methods_UArray2 actualRotation(int width,
                             int height,
@@ -39,9 +39,14 @@ A2Methods_UArray2 actualRotation(int width,
 void rotate90(int col, int row, A2Methods_UArray2 array2, void *elem,
               void *methodsAndArray);
 
-void printTime(char *time_file_name, double duration, int num_pixels);
+void rotate180(int col, int row, A2Methods_UArray2 array2, void *elem,
+              void *methodsAndArray);
 
+void printTime(char *time_file_name, double duration, int num_pixels, 
+             int width, int height);
 FILE *get_file_to_read(const char *file_name);
+
+
 
 
 #define SET_METHODS(METHODS, MAP, WHAT) do {                    \
@@ -124,11 +129,27 @@ int main(int argc, char *argv[])
      * containing a 2D array of the type returned by 'methods->new'.
      * 'methods' field of the result is the same as the argument.
      */
+    
     Pnm_ppm pixmap = Pnm_ppmread(fp, methods);
     /* A2Methods_UArray2 is the type of pixmap->pixels
     */
+    bool zero_degrees = false;
     pixmap->pixels = rotate(time_file_name, rotation, methods, map,
-                            &pixmap); 
+                            &pixmap, &zero_degrees);
+    if (zero_degrees == true) {
+        // printf("zero degrees\n");
+        CPUTime_T timer = CPUTime_New();
+        double time_used;
+
+        CPUTime_Start(timer);
+        pixmap->pixels = rotate(time_file_name, rotation, methods, map,
+                                &pixmap, &zero_degrees);
+        time_used = CPUTime_Stop(timer);
+        printTime(time_file_name, time_used, pixmap->width * 
+                 pixmap->height, pixmap->width, pixmap->height);
+        CPUTime_Free(&timer);        
+    }
+    
     Pnm_ppmwrite(stdout, pixmap);
     fclose(fp);
     Pnm_ppmfree(&pixmap);
@@ -156,7 +177,7 @@ FILE *get_file_to_read(const char *file_name)
 */
 A2Methods_UArray2 rotate(char *time_file_name, int degrees,
                          A2Methods_T methods, A2Methods_mapfun *map,
-                         Pnm_ppm *pixmap)
+                         Pnm_ppm *pixmap, bool* zero_degrees)
 {
     assert(methods != NULL && map != NULL && pixmap != NULL);
     
@@ -178,15 +199,16 @@ A2Methods_UArray2 rotate(char *time_file_name, int degrees,
         return actualRotation(width, height, map, methodsAndArray, pixmap,
                              time_file_name, rotate90);
     } 
-    // else if (degrees == 180) {
-    //     return actualRotation(height, width, map, methodsAndArray, pixmap,
-    //                          time_file_name, rotate180);
-    // 
-    // } else if (degrees == 270) {
+    else if (degrees == 180) {
+        return actualRotation(height, width, map, methodsAndArray, pixmap,
+                             time_file_name, rotate180);
+    } 
+    // else if (degrees == 270) {
     //     return actualRotation(width, height, map, methodsAndArray, pixmap,
     //                          time_file_name, rotate270);
     // 
     // }
+    *zero_degrees = true;
     return (*pixmap)->pixels; /* if rotation == 0 return original array*/
 }
 
@@ -232,7 +254,7 @@ A2Methods_UArray2 actualRotation(int width,
     (*pixmap)->width = height;
     (*pixmap)->height = width;
 
-    printTime(time_file_name, time_used, width * height);
+    printTime(time_file_name, time_used, width * height, width, height);
 
     CPUTime_Free(&timer);
     methods->free(&((*pixmap)->pixels));
@@ -255,23 +277,42 @@ void rotate90(int col, int row, A2Methods_UArray2 array2, void *elem,
     *((Pnm_rgb)methods->at(rotated, height - row - 1, col)) = *((Pnm_rgb)elem);
 }
 
+void rotate180(int col, int row, A2Methods_UArray2 array2, void *elem,
+              void *methodsAndArray)
+{
+    assert(array2 != NULL && methodsAndArray != NULL);
+
+    A2Methods_T methods = ((cl_methods_arr *)methodsAndArray)->methods;
+    A2Methods_UArray2 rotated = ((cl_methods_arr *)methodsAndArray)->rotated;
+    assert(rotated != NULL && methods != NULL);
+
+    int height = methods->height(array2);
+    int width = methods->width(array2);
+
+    *((Pnm_rgb)methods->at(rotated, width - col - 1,  height - row - 1)) 
+                                                            = *((Pnm_rgb)elem);
+}
+
 /*
 * Intializes a file pointer for timing output file and prints duration of
 * mapping the entire image and of one pixel in nanoseconds.
 * Memory allocation: file pointer created for timing file, freed in scope
 */
-void printTime(char *time_file_name, double duration, int num_pixels)
+void printTime(char *time_file_name, double duration, int num_pixels, 
+               int width, int height)
 {
     if (time_file_name != NULL) {
         FILE *time_fp = NULL;
         time_fp = fopen(time_file_name, "w");
+        fprintf(time_fp, "height: %d \n", width);
+        fprintf(time_fp, "widtht: %d \n", height);
         fprintf(time_fp, "Transformation completed in %.0f nanoseconds\n",
                 duration);
-        fprintf(time_fp, "Each pixel mapped in %.0f nanoseconds\n",
+        fprintf(time_fp, "Each pixel mapped in average %.0f nanoseconds\n",
                 duration / num_pixels);
         fclose(time_fp);
     }
 }
 
 
-
+//clock rate = cpu mhz

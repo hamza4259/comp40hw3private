@@ -20,22 +20,26 @@ int main(int argc, char const *argv[]) {
     (void) argc;
     (void) argv;
 
-    UArray2b_T test_UArray2b = UArray2b_new(12, 12, sizeof(int), 4);
-    assert(10 == UArray2b_width(test_UArray2b)); //testing width
-    assert(10 == UArray2b_height(test_UArray2b)); //testing height
-    // UArray2b_free(&test_UArray2b); //testing free
+    UArray2b_T test_UArray2b = UArray2b_new(10, 10, sizeof(int), 4);
     
     
-    *((int*)UArray2b_at(test_UArray2b, 0, 0)) = 1;
-    *((int*)UArray2b_at(test_UArray2b, 1, 0)) = 2;
-    *((int*)UArray2b_at(test_UArray2b, 2, 0)) = 2;
-    *((int*)UArray2b_at(test_UArray2b, 0, 1)) = 3;
-
-
-    // printf("uarray at 0, 0 after setting something: %d\n", *((int*)UArray2b_at(test_UArray2b, 0, 0)));
+    (void) test_UArray2b;
+    
+    // assert(10 == UArray2b_width(test_UArray2b)); //testing width
+    // assert(10 == UArray2b_height(test_UArray2b)); //testing height
+    // // UArray2b_free(&test_UArray2b); //testing free
+    // 
+    // 
+    // *((int*)UArray2b_at(test_UArray2b, 0, 0)) = 1;
+    // *((int*)UArray2b_at(test_UArray2b, 1, 0)) = 2;
+    // *((int*)UArray2b_at(test_UArray2b, 2, 0)) = 2;
+    // *((int*)UArray2b_at(test_UArray2b, 0, 1)) = 3;
+    // 
+    // 
+    // // printf("uarray at 0, 0 after setting something: %d\n", *((int*)UArray2b_at(test_UArray2b, 0, 0)));
     int sum = 0;
     UArray2b_map(test_UArray2b, running_sum_helper, &sum);
-    printf("sum: %d", sum);
+    // printf("sum: %d", sum);
 }
 
 /*
