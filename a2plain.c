@@ -13,7 +13,8 @@ static A2Methods_UArray2 new(int width, int height, int size)
     return UArray2_new(width, height, size);
 }
 
-static A2Methods_UArray2 new_with_blocksize(int width, int height, int size, int blocksize)
+static A2Methods_UArray2 new_with_blocksize(int width, int height, int size, 
+                                            int blocksize)
 {
   (void) blocksize;
   return UArray2_new(width, height, size);
@@ -47,7 +48,7 @@ static int blocksize(A2Methods_UArray2 array2)
 
 static A2Methods_Object *at(A2Methods_UArray2 array2, int i, int j)
 {
-	return UArray2_at(array2, i, j); //its col then row but other one follows this
+	return UArray2_at(array2, i, j);
 }
 
 typedef void applyfun(int i, int j, UArray2_T array2, void *elem, void *cl);
@@ -110,12 +111,12 @@ static struct A2Methods_T uarray2_methods_plain_struct = {
   at, 
   map_row_major,
   map_col_major,
-  NULL, //map_block_major
-  map_row_major, //map_default
+  NULL, /* map_block_major */
+  map_row_major, /*map_default*/
   small_map_row_major,
   small_map_col_major,
   NULL, 
-  small_map_row_major, //small_map_default
+  small_map_row_major, /*small_map_default*/
 };
 
 // finally the payoff: here is the exported pointer to the struct
